@@ -1,4 +1,4 @@
-# operator-template
+# flog k8s operator
 
 ## Description
 

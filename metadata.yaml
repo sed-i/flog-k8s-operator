@@ -3,21 +3,17 @@
 
 # For a complete list of supported options, see:
 # https://juju.is/docs/sdk/metadata-reference
-name: template-operator
-description: |
-  TEMPLATE-TODO: fill out the charm's description
-summary: |
-  TEMPLATE-TODO: fill out the charm's summary
 
-# TEMPLATE-TODO: replace with containers for your workload (delete for non-k8s)
+name: flog-k8s
+description: Charmed fake log generator
+summary: NTA
+
 containers:
-  httpbin:
-    resource: httpbin-image
+  workload:
+    resource: workload-image
 
-# TEMPLATE-TODO: each container defined above must specify an oci-image resource
 resources:
-  httpbin-image:
+  workload-image:
     type: oci-image
-    description: OCI image for httpbin (kennethreitz/httpbin)
-    # Included for simplicity in integration tests
-    upstream-source: kennethreitz/httpbin
+    description: OCI image just so we have a pebble_ready etc.
+    upstream-source: mingrammer/flog
