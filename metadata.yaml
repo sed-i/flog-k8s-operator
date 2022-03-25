@@ -16,7 +16,7 @@ resources:
   workload-image:
     type: oci-image
     description: OCI image just so we have a pebble_ready etc.
-    upstream-source: mingrammer/flog
+    upstream-source: ghcr.io/sed-i/flog:latest
 
 requires:
   log-proxy:

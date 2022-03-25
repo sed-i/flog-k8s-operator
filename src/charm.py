@@ -53,7 +53,7 @@ class FlogCharm(CharmBase):
         """Returns Pebble configuration layer for flog."""
 
         def command():
-            return "/bin/flog --format rfc5424 --loop --delay 1s --type log --output /bin/fake.log"
+            return "/bin/flog --format rfc5424 --loop --rate 1 --type log --output /bin/fake.log"
 
         return Layer(
             {
