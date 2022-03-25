@@ -17,3 +17,7 @@ resources:
     type: oci-image
     description: OCI image just so we have a pebble_ready etc.
     upstream-source: mingrammer/flog
+
+requires:
+  log-proxy:
+    interface: loki_push_api

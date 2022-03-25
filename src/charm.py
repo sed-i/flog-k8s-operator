@@ -8,6 +8,7 @@
 
 import logging
 
+from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from ops.charm import CharmBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, ModelError
@@ -21,7 +22,20 @@ class FlogCharm(CharmBase):
 
     def __init__(self, *args):
         super().__init__(*args)
+
+        self._log_proxy = LogProxyConsumer(
+            charm=self, log_files=["/bin/fake.log"], container_name="workload"
+        )
+        self.framework.observe(
+            self._log_proxy.on.promtail_digest_error,
+            self._promtail_error,
+        )
+
         self.framework.observe(self.on.workload_pebble_ready, self._on_workload_pebble_ready)
+
+    def _promtail_error(self, event):
+        logger.error(event.message)
+        self.unit.status = BlockedStatus(event.message)
 
     def _on_workload_pebble_ready(self, event):
         """Define and start a workload using the Pebble API.
