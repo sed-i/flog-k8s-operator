@@ -32,6 +32,7 @@ class FlogCharm(CharmBase):
         )
 
         self.framework.observe(self.on.workload_pebble_ready, self._on_workload_pebble_ready)
+        self.framework.observe(self.on.config_changed, self._on_config_changed)
 
     def _promtail_error(self, event):
         logger.error(event.message)
@@ -53,7 +54,15 @@ class FlogCharm(CharmBase):
         """Returns Pebble configuration layer for flog."""
 
         def command():
-            return "/bin/flog --format rfc5424 --loop --rate 1 --type log --output /bin/fake.log"
+            cmd = (
+                "/bin/flog --format rfc5424 --loop --type log --output /bin/fake.log --overwrite "
+                f"--rate {self.model.config['rate']} "
+            )
+
+            if rotate := self.model.config.get("rotate"):
+                cmd += f"--rotate {rotate} "
+
+            return cmd
 
         return Layer(
             {
@@ -78,6 +87,9 @@ class FlogCharm(CharmBase):
         if overlay.services != plan.services:
             container.add_layer("flog layer", overlay, combine=True)
             container.replan()
+
+    def _on_config_changed(self, event):
+        self._update_layer()
 
 
 if __name__ == "__main__":
