@@ -11,7 +11,7 @@ import logging
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from ops.charm import CharmBase
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, ModelError
+from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 from ops.pebble import ChangeError, Layer
 
 logger = logging.getLogger(__name__)
@@ -43,6 +43,11 @@ class FlogCharm(CharmBase):
 
         Learn more about Pebble layers at https://github.com/canonical/pebble
         """
+        container = self.unit.get_container("workload")
+        if not container.can_connect():
+            self.unit.status = WaitingStatus("Waiting for Pebble ready")
+            return
+
         try:
             self._update_layer()
         except (ModelError, TypeError, ChangeError) as e:
