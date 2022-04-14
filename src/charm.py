@@ -94,7 +94,9 @@ class FlogCharm(CharmBase):
             container.replan()
 
     def _on_config_changed(self, event):
-        self._update_layer()
+        container = self.unit.get_container("workload")
+        if container.can_connect():
+            self._update_layer()
 
 
 if __name__ == "__main__":
