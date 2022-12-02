@@ -11,3 +11,7 @@ options:
   rotate:
     description: Rotate log after x logs.
     type: int
+  format:
+    default: json
+    description: Log format. Must be recognizeable by flog, e.g. apache_common, apache_combined, apache_error, rfc3164, rfc5424, json.
+    type: string

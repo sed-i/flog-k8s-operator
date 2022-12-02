@@ -60,7 +60,8 @@ class FlogCharm(CharmBase):
 
         def command():
             cmd = (
-                "/bin/flog --format rfc5424 --loop --type log --output /bin/fake.log --overwrite "
+                "/bin/flog --loop --type log --output /bin/fake.log --overwrite "
+                f"--format {self.model.config['format']} "
                 f"--rate {self.model.config['rate']} "
             )
 
