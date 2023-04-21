@@ -26,7 +26,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
     # build and deploy charm from local source folder
     charm = await ops_test.build_charm(".")
     resources = {"workload-image": METADATA["resources"]["workload-image"]["upstream-source"]}
-    await ops_test.model.deploy(charm, resources=resources, application_name=APP_NAME)
+    await ops_test.model.deploy(charm, resources=resources, application_name=APP_NAME, series="focal")
 
     # issuing dummy update_status just to trigger an event
     await ops_test.model.set_config({"update-status-hook-interval": "10s"})
