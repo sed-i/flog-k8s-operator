@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
-#
-# Learn more at: https://juju.is/docs/sdk
+
 
 """Charmed flog."""
 
@@ -11,8 +10,10 @@ import logging
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from ops.charm import CharmBase
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
-from ops.pebble import ChangeError, Layer
+from ops.model import ActiveStatus, BlockedStatus
+from manifest_builder import flog_manifest
+from workload import Workload
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,81 +24,39 @@ class FlogCharm(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
 
+        # Relation managers
+        # NOTE: these are expected to be fully initialized here, i.e. in this approach, relation managers do not observe
+        # any events - they are fully initialized after their constructor is done.
         self._log_proxy = LogProxyConsumer(
             charm=self, log_files=["/bin/fake.log"], container_name="workload"
         )
+        # TODO refactor LogProxyConsumer so it has a `.manifest()` getter we could apply it using the workload instance.
+
+        manifest = flog_manifest(self.config)
+        workload = Workload("workload")  # TODO: rename container to "flog"
+
+        # Flog's manifest may change only due to config-changed.
+        # However, if pebble-ready is emitted after config-changed, then we won't be able to apply
+        # the manifest just yet.
+        # Also need to apply the manifest on log-proxy events (push promtail, update promtail config).
+        # Might as well call `apply_manifest` every time.
+        # Note: Not wrapping in try-except because failing to push/add_layer after we already
+        # did the due-diligence of `can_connect` should indeed put the charm in error state
+        # and let juju/admin retry/resolve. I.e. no need to catch and manually put in blocked
+        # status.
+        workload.apply_manifest(manifest)
+
+        # Note: if LogProxyConsumer is refactored to have a "manifest" method, we may no longer need this `observe`.
         self.framework.observe(
             self._log_proxy.on.promtail_digest_error,
             self._promtail_error,
         )
 
-        self.framework.observe(self.on.workload_pebble_ready, self._on_workload_pebble_ready)
-        self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self.unit.status = ActiveStatus()
 
     def _promtail_error(self, event):
         logger.error(event.message)
         self.unit.status = BlockedStatus(event.message)
-
-    def _on_workload_pebble_ready(self, event):
-        """Define and start a workload using the Pebble API.
-
-        Learn more about Pebble layers at https://github.com/canonical/pebble
-        """
-        container = self.unit.get_container("workload")
-        if not container.can_connect():
-            self.unit.status = WaitingStatus("Waiting for Pebble ready")
-            return
-
-        try:
-            self._update_layer()
-        except (ModelError, TypeError, ChangeError) as e:
-            self.unit.status = BlockedStatus("Layer update failed: {}".format(str(e)))
-        else:
-            self.unit.status = ActiveStatus()
-
-    def _flog_layer(self) -> Layer:
-        """Returns Pebble configuration layer for flog."""
-
-        def command():
-            cmd = (
-                "/bin/flog --loop --type log --output /bin/fake.log --overwrite "
-                f"--format {self.model.config['format']} "
-                f"--rate {self.model.config['rate']} "
-            )
-
-            if rotate := self.model.config.get("rotate"):
-                cmd += f"--rotate {rotate} "
-
-            return cmd
-
-        return Layer(
-            {
-                "summary": "flog layer",
-                "description": "pebble config layer for flog",
-                "services": {
-                    "flog": {
-                        "override": "replace",
-                        "summary": "flog service",
-                        "command": command(),
-                        "startup": "enabled",
-                    }
-                },
-            }
-        )
-
-    def _update_layer(self):
-        container = self.unit.get_container("workload")  # container name from metadata.yaml
-        plan = container.get_plan()
-        overlay = self._flog_layer()
-
-        if overlay.services != plan.services:
-            container.add_layer("flog layer", overlay, combine=True)
-            container.replan()
-
-    def _on_config_changed(self, event):
-        container = self.unit.get_container("workload")
-        if container.can_connect():
-            self._update_layer()
 
 
 if __name__ == "__main__":
