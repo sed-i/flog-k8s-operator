@@ -4,7 +4,8 @@
 """Manifest builder."""
 
 from ops import pebble
-from workload import Manifest
+
+from ops_extension import Manifest
 
 
 def _flog_layer(config) -> pebble.Layer:
@@ -39,4 +40,6 @@ def _flog_layer(config) -> pebble.Layer:
 
 
 def flog_manifest(config) -> Manifest:
-    return {}, _flog_layer(config)
+    """Return the flog manifest."""
+    # We do not have any config files for flog.
+    return Manifest({}, _flog_layer(config))
