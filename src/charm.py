@@ -24,7 +24,10 @@ class FlogCharm(CharmBase):
         super().__init__(*args)
 
         self._log_proxy = LogProxyConsumer(
-            charm=self, log_files=["/bin/fake.log"], container_name="workload"
+            charm=self,
+            log_files=["/bin/fake.log"],
+            container_name="workload",
+            insecure_skip_verify=True,
         )
         self.framework.observe(
             self._log_proxy.on.promtail_digest_error,
