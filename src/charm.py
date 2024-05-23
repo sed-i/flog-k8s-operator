@@ -8,7 +8,7 @@
 
 import logging
 
-from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
+from charms.loki_k8s.v1.loki_push_api import LogProxyConsumer
 from ops.charm import CharmBase
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
@@ -25,8 +25,7 @@ class FlogCharm(CharmBase):
 
         self._log_proxy = LogProxyConsumer(
             charm=self,
-            log_files=["/bin/fake.log"],
-            container_name="workload",
+            logs_scheme={"workload": {"log-files": ["/bin/fake.log"]}},
             insecure_skip_verify=True,
         )
         self.framework.observe(
