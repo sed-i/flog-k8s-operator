@@ -1,0 +1,9 @@
+groups:
+  - name: flog-recording-rules
+    rules:
+      - record: flog_log_lines_per_second
+        expr: |
+          sum(rate({%%juju_topology%%}[5m]))
+      - record: flog_log_bytes_per_second
+        expr: |
+          sum(bytes_rate({%%juju_topology%%}[5m]))
