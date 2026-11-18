@@ -1,9 +1,5 @@
 groups:
-  - name: flog-recording-rules
+  - name: log-recording-group
     rules:
-      - record: flog_log_lines_per_second
-        expr: |
-          sum(rate({%%juju_topology%%}[5m]))
-      - record: flog_log_bytes_per_second
-        expr: |
-          sum(bytes_rate({%%juju_topology%%}[5m]))
+      - record: ServerErrorLogCount5m
+        expr: sum by (juju_application) (count_over_time({charm="flog-k8s"} | json | status >= 500 [5m]))

@@ -3,7 +3,7 @@ groups:
     rules:
       - alert: FlogNotGeneratingLogs
         expr: |
-          sum(count_over_time({%%juju_topology%%}[5m])) == 0
+          sum(count_over_time({charm="flog-k8s"}[5m])) == 0
         for: 5m
         labels:
           severity: warning
