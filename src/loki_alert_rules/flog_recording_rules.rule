@@ -1,0 +1,5 @@
+groups:
+  - name: log-recording-group
+    rules:
+      - record: ServerErrorLogCount5m
+        expr: sum by (juju_application) (count_over_time({charm="flog-k8s"} | json | status >= 500 [5m]))
